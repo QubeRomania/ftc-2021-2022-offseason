@@ -17,7 +17,7 @@ class Intake(hwMap: HardwareMap) {
         stopIntake()
     }
 
-    fun setServoOpen(power: Double) {
+    fun setServoOpen() {
         setServoPositions(servoOpen)
     }
 
