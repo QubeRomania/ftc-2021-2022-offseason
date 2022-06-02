@@ -7,11 +7,13 @@ class Hardware(hwMap: HardwareMap) {
     val intake = Intake(hwMap)
     val outtake = Outtake(hwMap)
     val carousel = Carousel(hwMap)
+    val customElement = CustomElement(hwMap)
 
     fun stop() {
         motors.stop()
         intake.stop()
         outtake.stop()
         carousel.stop()
+        customElement.stop()
     }
 }
