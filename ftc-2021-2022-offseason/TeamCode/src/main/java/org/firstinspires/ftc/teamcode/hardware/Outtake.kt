@@ -38,11 +38,11 @@ class Outtake(hwMap: HardwareMap) {
 
     }
 
-    private val outtakeSlider1 = hwMap.dcMotor["outtakeSlider1"] ?: throw Exception("Failed to find motor outtakeSlider1")
-    private val outtakeSlider2 = hwMap.dcMotor["outtakeSlider2"] ?: throw Exception("Failed to find motor outtakeSlider2")
+    val outtakeSlider1 = hwMap.dcMotor["outtakeSlider1"] ?: throw Exception("Failed to find motor outtakeSlider1")
+    val outtakeSlider2 = hwMap.dcMotor["outtakeSlider2"] ?: throw Exception("Failed to find motor outtakeSlider2")
 
 
-    private val touchSensor = hwMap.get(RevTouchSensor::class.java,"touchSensor") ?: throw Exception("Failed to find RevTouchSensor touchSensor")
+    val touchSensor = hwMap.get(RevTouchSensor::class.java,"touchSensor") ?: throw Exception("Failed to find RevTouchSensor touchSensor")
 
     var outtakePosition: Int = 0
 
