@@ -17,11 +17,11 @@ class Intake(hwMap: HardwareMap) {
         stopIntake()
     }
 
-    fun setServoOpen() {
+    fun openTrap() {
         setServoPositions(servoOpen)
     }
 
-    fun setServoClose() {
+    fun closeTrap() {
         setServoPositions(servoClose)
     }
 
