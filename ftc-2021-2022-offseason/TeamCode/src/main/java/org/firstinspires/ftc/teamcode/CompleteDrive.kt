@@ -7,8 +7,8 @@ import kotlin.math.sqrt
 @TeleOp(name = "CompleteDrive", group = "Main")
 class CompleteDrive: OpMode() {
     override fun preInit() {
-        hw.customElement.servoClaw.position = 0.38
-        hw.customElement.servoArm.position = 0.62
+        //hw.customElement.servoClaw.position = 0.38
+        //hw.customElement.servoArm.position = 0.62
     }
 
     override fun preInitLoop() {
@@ -28,6 +28,8 @@ class CompleteDrive: OpMode() {
         var isLow = false
         var isClosed = false
 
+        var isReleased = false
+
         val slowScale = 0.2
 
         var mod = 1
@@ -39,7 +41,7 @@ class CompleteDrive: OpMode() {
         while(opModeIsActive()){
             val power = speed
             val rotPower = rotation
-            
+
             // Mod selection: normal, manual, endgame
             if(gp2.checkToggle(Gamepad.Button.Y)) {
                 mod = normal
@@ -50,17 +52,17 @@ class CompleteDrive: OpMode() {
                 else
                     manual
             }
-            
+
             // Chassis rotation
-            hw.motors.move(direction, power*slowScale, rotPower*slowScale)
-            
+            hw.motors.move(direction, power, rotPower)
+
             // Mod normal
             if(mod == normal) {
-                
+
                 // Intake forward and backward gp1 and gp2
                 intake.setIntakePower(gp1.right_trigger-gp1.left_trigger.toDouble())
                 intake.setIntakePower(gp2.right_trigger-gp2.left_trigger.toDouble())
-                
+
                 // Duck deliver gp1
                 if(gp1.checkToggle(Gamepad.Button.X)) {
                     if(!isDelivering)
@@ -74,7 +76,8 @@ class CompleteDrive: OpMode() {
                         isDelivering = false
                     }
                 }
-                
+
+                /*
                 // Open/close trap gp1
                 if(gp1.checkToggle(Gamepad.Button.A)) {
                     if(!intakeOk)
@@ -88,7 +91,9 @@ class CompleteDrive: OpMode() {
                         intakeOk = false
                     }
                 }
-                
+                 */
+
+                /*
                 // Open/close trap gp2
                 if(gp2.checkToggle(Gamepad.Button.A)) {
                     if(!intakeOk)
@@ -102,7 +107,20 @@ class CompleteDrive: OpMode() {
                         intakeOk = false
                     }
                 }
-                
+                */
+
+                if(gp2.checkToggle(Gamepad.Button.A))
+                {
+                    isReleased = if(!isReleased) {
+                        outtake.releaseFreight()
+                        true
+                    } else {
+                        outtake.closeFlicker()
+                        false
+                    }
+                }
+
+
                 // Up box gp2
                 if(gp2.checkToggle(Gamepad.Button.RIGHT_BUMPER)) {
                     if(!isUp) {
@@ -111,7 +129,7 @@ class CompleteDrive: OpMode() {
                         isClosed = false
                     }
                 }
-                
+
                 // Close box gp2
                 if(gp2.checkToggle(Gamepad.Button.LEFT_BUMPER)) {
                     if(!isClosed) {
@@ -120,7 +138,7 @@ class CompleteDrive: OpMode() {
                         isClosed = true
                     }
                 }
-                
+
                 // Mid box gp2
                 if(gp2.checkToggle(Gamepad.Button.Y)) {
                     if(!isMid){
@@ -130,7 +148,7 @@ class CompleteDrive: OpMode() {
                         isUp = true
                     }
                 }
-                
+
                 // Low box gp2
                 if(gp2.checkToggle(Gamepad.Button.B)) {
                     if(!isLow) {
@@ -140,7 +158,8 @@ class CompleteDrive: OpMode() {
                         isMid = false
                     }
                 }
-                
+                /*
+
                 // Open/close claw gp2
                 if(gp2.checkToggle(Gamepad.Button.X)) {
                     if(!customOk)
@@ -154,48 +173,52 @@ class CompleteDrive: OpMode() {
                         customOk = false
                     }
                 }
+                */
             }
-            
+
             // Mod manual
             if(mod == manual) {
-                
+
                 // Up/down slider gp1
                 if(gp1.checkToggle(Gamepad.Button.RIGHT_BUMPER))
                     outtake.openSlider()
                 if(gp1.checkToggle(Gamepad.Button.LEFT_BUMPER))
                     outtake.openLowSlider()
             }
-            
+
             // Mod endgame
             if(mod == endgame) {
-                
+
                 // Forward and backward duck delivery gp1
                 carousel.moveCarousel(gp1.right_trigger-gp1.left_trigger.toDouble())
-                
+
+                /*
                 // Move arm gp2
                 if(gp2.left_stick_y > 0.1)
                     customElement.moveOneUp()
-                
+
                 if(gp2.left_stick_y < -0.1)
                     customElement.moveOneDown()
-                
+
                 // Preset arm positions for element delivery and pickup gp2
                 if(gp2.dpad_up)
                 {
-                    customElement.openServoZ()
+                    customElement.openServoArm()
                 }
                 if(gp2.dpad_down)
                 {
-                    customElement.closeServoZ()
+                    customElement.closeServoArm()
                 }
+
+                 */
 
             }
 
             telemetry.addData("Outtake target", outtake.outtakePosition)
             outtake.printPosition(telemetry)
-            telemetry.addData("TouchSensor",outtake.touchSensor.isPressed)
-            telemetry.addData("ArmY",customElement.servoClaw.position)
-            telemetry.addData("ArmZ",customElement.servoArm.position)
+            //telemetry.addData("TouchSensor",outtake.touchSensor.isPressed)
+            //telemetry.addData("ArmY",customElement.servoClaw.position)
+            //telemetry.addData("ArmZ",customElement.servoArm.position)
             telemetry.update()
         }
     }

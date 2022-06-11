@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple
 import com.qualcomm.robotcore.hardware.HardwareMap
 import com.qualcomm.robotcore.hardware.Servo
 import org.firstinspires.ftc.robotcore.external.Telemetry
+import org.firstinspires.ftc.teamcode.Timing
 import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintWriter
@@ -22,19 +23,23 @@ import kotlin.math.absoluteValue
 class Outtake(hwMap: HardwareMap) {
     companion object {
         const val SLIDER_LOW = 320
-        const val SLIDER_MEDIUM = 600
-        const val SLIDER_HIGH = 870
+        const val SLIDER_MEDIUM = 800
+        const val SLIDER_HIGH = 1100
         var SLIDER_CLOSE = 0
         const val SLIDER_AUX = -100
         var SLIDER_START_POSITION = 0
         const val MULTIPLIER = 3
 
-        const val OUTTAKE_POWER = 0.8
+        const val OUTTAKE_POWER = 1.0
 
-        const val servo1Open = 0.60
-        const val servo1Close = 0.80
-        const val servo2Open = 0.60
-        const val servo2Close = 0.80
+        const val servo1Open = 0.8 // right
+        const val servo1Close = 0.0 // right
+        const val servo2Open = 0.6 // left
+        const val servo2Close = 0.00 // left
+
+        const val flickerOpen = 1.0
+        const val flickerHold = 0.5
+        const val flickerClose = 0.0
 
     }
 
@@ -42,12 +47,16 @@ class Outtake(hwMap: HardwareMap) {
     private val outtakeSlider2 = hwMap.dcMotor["outtakeSlider2"] ?: throw Exception("Failed to find motor outtakeSlider2")
 
 
-    private val touchSensor = hwMap.get(RevTouchSensor::class.java,"touchSensor") ?: throw Exception("Failed to find RevTouchSensor touchSensor")
+    //val touchSensor = hwMap.get(RevTouchSensor::class.java,"touchSensor") ?: throw Exception("Failed to find RevTouchSensor touchSensor")
+
+    var scoreTimer = Timing.Timer(200)
 
     var outtakePosition: Int = 0
 
     private val outtakeServo1 = hwMap.servo["outtakeServo1"] ?: throw Exception("Failed to find servo outtakeServo1")
     private val outtakeServo2 = hwMap.servo["outtakeServo2"] ?: throw Exception("Failed to find servo outtakeServo2")
+
+    private val flickerServo = hwMap.servo["flickerServo"] ?: throw Exception("Failed to find servo flickerServo")
 
     init {
         outtakeSlider1.zeroPowerBehavior = DcMotor.ZeroPowerBehavior.FLOAT
@@ -56,7 +65,7 @@ class Outtake(hwMap: HardwareMap) {
         outtakeSlider1.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
 
         outtakeSlider2.zeroPowerBehavior = DcMotor.ZeroPowerBehavior.FLOAT
-        outtakeSlider2.direction = DcMotorSimple.Direction.FORWARD
+        outtakeSlider2.direction = DcMotorSimple.Direction.REVERSE
         outtakeSlider2.mode = DcMotor.RunMode.RUN_USING_ENCODER
         outtakeSlider2.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
 
@@ -70,6 +79,8 @@ class Outtake(hwMap: HardwareMap) {
     }
 
     fun openSlider() {
+        holdFreight()
+
         outtakePosition = SLIDER_HIGH
         outtakeSlider1.targetPosition = outtakePosition
         outtakeSlider1.mode = DcMotor.RunMode.RUN_TO_POSITION
@@ -78,9 +89,31 @@ class Outtake(hwMap: HardwareMap) {
         outtakeSlider2.targetPosition = outtakePosition
         outtakeSlider2.mode = DcMotor.RunMode.RUN_TO_POSITION
         outtakeSlider2.power = OUTTAKE_POWER
+
+        scoreTimer.start()
+
+        while (!scoreTimer.done()) {
+        }
+        scoreTimer.pause()
+
+        releaseServo()
+
     }
 
     fun closeSlider() {
+        closeFlicker()
+
+        scoreTimer = Timing.Timer(500)
+
+        closeServo()
+
+        scoreTimer.start()
+
+        while (!scoreTimer.done()){
+
+        }
+        scoreTimer.pause()
+
         outtakePosition = SLIDER_CLOSE
         outtakeSlider1.targetPosition = outtakePosition
         outtakeSlider1.mode = DcMotor.RunMode.RUN_TO_POSITION
@@ -139,6 +172,18 @@ class Outtake(hwMap: HardwareMap) {
     fun closeServo(){
         setServoPositions(servo1Close)
         setServoPositions(servo2Close)
+    }
+
+    fun releaseFreight(){
+        flickerServo.position = flickerOpen
+    }
+
+    fun holdFreight(){
+        flickerServo.position = flickerHold
+    }
+
+    fun closeFlicker(){
+        flickerServo.position = flickerClose
     }
 
     fun stop(){
