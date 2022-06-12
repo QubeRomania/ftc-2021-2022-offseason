@@ -1,49 +1,89 @@
 package org.firstinspires.ftc.teamcode.hardware
 
 import com.qualcomm.robotcore.hardware.*
+import org.firstinspires.ftc.teamcode.hardware.Outtake.Companion.servo1Close
+import org.firstinspires.ftc.teamcode.hardware.Outtake.Companion.servo1Open
+import org.firstinspires.ftc.teamcode.hardware.Outtake.Companion.servo2Close
 
 
 class CustomElement(hwMap: HardwareMap) {
-    private val servo1 = hwMap.servo["intakeServo1"] ?: throw Exception("Failed to find servo outtakeServo1")
-    private val servo2 = hwMap.servo["intakeServo2"] ?: throw Exception("Failed to find servo outtakeServo2")
+    val servoClaw = hwMap.servo["customServo1"] ?: throw Exception("Failed to find servo customElementServo1")
+    val servoArm = hwMap.servo["customServo2"] ?: throw Exception("Failed to find servo customElementServo2")
     companion object {
-        const val servo1Open = 0.60
-        const val servo1Close = 0.80
-        const val servo2Open = 0.60
-        const val servo2Close = 0.80
+        const val servoOpenClaw = 0.60
+        const val servoCloseClaw = 0.80
+        const val servoOpenArm = 0.60
+        const val servoCloseArm = 0.80
+        const val modifier = 0.03
     }
 
-    private fun openServo1() {
-        setServoPositions1(servo1Open)
+    var position = servoCloseClaw
+
+    private fun openServoClaw() {
+        setServoPositionsClaw(servoOpenClaw)
     }
 
-    private fun openServo2() {
-        setServoPositions2(servo2Open)
+    fun openServoArm() {
+        setServoPositionsArm(servoOpenArm)
     }
 
-    private fun closeServo1() {
-        setServoPositions1(servo1Close)
+    fun closeServoClaw() {
+        setServoPositionsClaw(servoCloseClaw)
     }
 
-    private fun closeServo2() {
-        setServoPositions2(servo2Close)
+    fun closeServoArm() {
+        setServoPositionsArm(servoCloseArm)
     }
 
-    fun openServos() {
-        openServo1()
-        openServo2()
+    fun openClaw() {
+        openServoClaw()
     }
 
-    fun closeServos() {
-        closeServo1()
-        closeServo2()
+    fun openArm() {
+        openServoArm()
     }
 
-    private fun setServoPositions1(pos: Double) {
-        servo1.position = pos
+    fun closeClaw() {
+        closeServoClaw()
     }
 
-    private fun setServoPositions2(pos: Double) {
-        servo2.position = pos
+    fun closeArm() {
+        closeServoArm()
     }
+
+    fun setServoPositionsClaw(pos: Double) {
+        servoClaw.position = pos
+    }
+
+    fun setServoPositionsArm(pos: Double) {
+        servoArm.position = pos
+    }
+
+    fun moveOneUp()
+    {
+        position = servoArm.position
+        position += modifier
+
+        if(position > servoCloseArm)
+            position = servoCloseArm
+
+        servoArm.position = position
+    }
+
+    fun moveOneDown()
+    {
+        position = servoArm.position
+        position -= modifier
+
+        if(position < servoOpenArm)
+            position = servoOpenArm
+
+        servoArm.position = position
+    }
+
+    fun stop() {
+        closeClaw()
+        closeArm()
+    }
+
 }

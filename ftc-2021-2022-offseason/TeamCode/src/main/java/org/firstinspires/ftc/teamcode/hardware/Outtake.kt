@@ -32,14 +32,14 @@ class Outtake(hwMap: HardwareMap) {
 
         const val OUTTAKE_POWER = 1.0
 
-        const val servo1Open = 0.8 // right
-        const val servo1Close = 0.0 // right
-        const val servo2Open = 0.6 // left
-        const val servo2Close = 0.00 // left
+        const val servo1Open = 0.41 // right
+        const val servo1Close = 1.0 // right
+        const val servo2Open = 0.41 // left
+        const val servo2Close = 1.0 // left
 
-        const val flickerOpen = 1.0
-        const val flickerHold = 0.5
-        const val flickerClose = 0.0
+        const val flickerOpen = 0.42
+        const val flickerHold = 0.0
+        const val flickerClose = 0.18
 
     }
 
@@ -76,6 +76,7 @@ class Outtake(hwMap: HardwareMap) {
         outtakePosition = 0
 
         closeServo()
+        closeFlicker()
     }
 
     fun openSlider() {
@@ -103,7 +104,7 @@ class Outtake(hwMap: HardwareMap) {
     fun closeSlider() {
         closeFlicker()
 
-        scoreTimer = Timing.Timer(500)
+        scoreTimer = Timing.Timer(800)
 
         closeServo()
 
