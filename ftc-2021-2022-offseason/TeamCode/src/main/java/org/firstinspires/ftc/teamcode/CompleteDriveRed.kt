@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import com.qualcomm.robotcore.util.ElapsedTime
 import org.firstinspires.ftc.teamcode.hardware.Hardware
 import kotlin.math.sqrt
 
@@ -16,6 +17,18 @@ class CompleteDrive: OpMode() {
         telemetry.update()
         idle()
     }
+
+    enum class LiftState{
+        LIFT_START,
+        LIFT_EXTEND_MEDIUM,
+        LIFT_EXTEND_UP,
+        LIFT_MEDIUM,
+        LIFT_UP,
+        LIFT_DUMP_UP,
+        LIFT_DUMP_MEDIUM,
+        LIFT_RETRACT,
+    }
+
     override fun Hardware.run() {
         val gp1 = Gamepad(gamepad1)
         val gp2 = Gamepad(gamepad2)
@@ -30,12 +43,22 @@ class CompleteDrive: OpMode() {
 
         var isReleased = false
 
-        val slowScale = 0.2
+        var isPutting = false
+
+        val slowScale = 0.4
 
         var mod = 1
         val normal = 1
         val manual = 2
         val endgame = 2
+
+        var DUMP_TIME_UP = 0.1
+        var DUMP_TIME_MEDIUM = 0.9
+
+        var liftState = LiftState.LIFT_START
+
+        var liftTimer = ElapsedTime()
+        liftTimer.reset()
 
 
         while(opModeIsActive()){
@@ -53,62 +76,112 @@ class CompleteDrive: OpMode() {
                     manual
             }
 
-            // Chassis rotation
-            hw.motors.move(direction, power, rotPower)
+            // Chassis
+            if(gp1.checkHold(Gamepad.Button.LEFT_BUMPER))
+                hw.motors.move(direction*slowScale, power*slowScale, rotPower*slowScale)
+            else
+                hw.motors.move(direction, power, rotPower)
 
             // Mod normal
             if(mod == normal) {
 
                 // Intake forward and backward gp1 and gp2
                 intake.setIntakePower(gp1.right_trigger-gp1.left_trigger.toDouble())
-                intake.setIntakePower(gp2.right_trigger-gp2.left_trigger.toDouble())
+                intake.setIntakePower((gp2.right_trigger-gp2.left_trigger.toDouble())*0.8)
+
+                //outtakeControl
+                when(liftState)
+                {
+                    LiftState.LIFT_START -> {
+                        if(gp2.checkToggle(Gamepad.Button.RIGHT_BUMPER))
+                        {
+                            outtake.holdFreight()
+                            outtake.openSlider()
+                            liftState = LiftState.LIFT_EXTEND_UP
+                        }
+                        if(gp2.checkToggle(Gamepad.Button.B))
+                        {
+                            outtake.holdFreight()
+                            outtake.openMidSlider()
+                            liftState = LiftState.LIFT_EXTEND_MEDIUM
+                        }
+                    }
+
+                    LiftState.LIFT_EXTEND_MEDIUM -> {
+                        if(outtake.getSliderPositionRelativeToSliderMedium() < 100)
+                        {
+                            outtake.releaseServoMid()
+                            liftState = LiftState.LIFT_MEDIUM
+                        }
+                    }
+
+                    LiftState.LIFT_EXTEND_UP -> {
+                        if(outtake.getSliderPositionRelativeToSliderHigh() < 1250)
+                        {
+                            outtake.releaseServo()
+                            liftState = LiftState.LIFT_UP
+                        }
+                    }
+
+                    LiftState.LIFT_MEDIUM -> {
+                        if(gp2.checkToggle(Gamepad.Button.LEFT_BUMPER))
+                        {
+                            outtake.closeFlicker()
+                            isReleased = false
+                            outtake.closeServo()
+                            liftTimer.reset()
+                            liftState = LiftState.LIFT_DUMP_MEDIUM
+                        }
+                    }
+
+                    LiftState.LIFT_UP -> {
+                        if(gp2.checkToggle(Gamepad.Button.LEFT_BUMPER))
+                        {
+                            outtake.closeFlicker()
+                            isReleased = false
+                            outtake.closeServo()
+                            liftTimer.reset()
+                            liftState = LiftState.LIFT_DUMP_UP
+                        }
+                    }
+
+                    LiftState.LIFT_DUMP_MEDIUM -> {
+                        if(liftTimer.seconds() >= DUMP_TIME_MEDIUM)
+                        {
+                            outtake.closeSlider()
+                            liftState = LiftState.LIFT_RETRACT
+                        }
+                    }
+
+                    LiftState.LIFT_DUMP_UP -> {
+                        if(liftTimer.seconds() >= DUMP_TIME_UP)
+                        {
+                            outtake.closeSlider()
+                            liftState = LiftState.LIFT_RETRACT
+                        }
+                    }
+
+                    LiftState.LIFT_RETRACT -> {
+                        liftState = LiftState.LIFT_START
+                    }
+
+                    else -> {
+                        liftState = LiftState.LIFT_START
+                    }
+                }
 
                 // Duck deliver gp1
                 if(gp1.checkToggle(Gamepad.Button.X)) {
-                    if(!isDelivering)
-                    {
-                        carousel.moveCarousel(-0.8)
-                        isDelivering = true
-                    }
-                    else
-                    {
-                        carousel.moveCarousel(0.0)
-                        isDelivering = false
-                    }
+                    carousel.moveCarousel(-0.5)
+                    sleep(400)
+                    carousel.moveCarousel(-0.7)
+                    sleep(950)
+                    carousel.moveCarousel(-1.0)
+                    sleep(250)
+                    carousel.moveCarousel(0.0)
                 }
 
-                /*
-                // Open/close trap gp1
-                if(gp1.checkToggle(Gamepad.Button.A)) {
-                    if(!intakeOk)
-                    {
-                        intake.openTrap()
-                        intakeOk = true
-                    }
-                    else
-                    {
-                        intake.closeTrap()
-                        intakeOk = false
-                    }
-                }
-                 */
-
-                /*
-                // Open/close trap gp2
-                if(gp2.checkToggle(Gamepad.Button.A)) {
-                    if(!intakeOk)
-                    {
-                        intake.openTrap()
-                        intakeOk = true
-                    }
-                    else
-                    {
-                        intake.closeTrap()
-                        intakeOk = false
-                    }
-                }
-                */
-
+                //flickerhw.motors.move(direction*slowScale, power*slowScale, rotPower*slowScale)
                 if(gp2.checkToggle(Gamepad.Button.A))
                 {
                     isReleased = if(!isReleased) {
@@ -122,7 +195,7 @@ class CompleteDrive: OpMode() {
 
 
                 // Up box gp2
-                if(gp2.checkToggle(Gamepad.Button.RIGHT_BUMPER)) {
+                /*if(gp2.checkToggle(Gamepad.Button.RIGHT_BUMPER)) {
                     if(!isUp) {
                         outtake.openSlider()
                         isUp = true
@@ -136,10 +209,14 @@ class CompleteDrive: OpMode() {
                         outtake.closeSlider()
                         isUp = false
                         isClosed = true
+                        isReleased = false
                     }
                 }
 
+                 */
+
                 // Mid box gp2
+                /*
                 if(gp2.checkToggle(Gamepad.Button.Y)) {
                     if(!isMid){
                         outtake.openMidSlider()
@@ -158,10 +235,12 @@ class CompleteDrive: OpMode() {
                         isMid = false
                     }
                 }
-                /*
 
-                // Open/close claw gp2
-                if(gp2.checkToggle(Gamepad.Button.X)) {
+                 */
+
+
+                // Open/close claw gp1
+                if(gp1.checkToggle(Gamepad.Button.A)) {
                     if(!customOk)
                     {
                         customElement.openClaw()
@@ -173,17 +252,37 @@ class CompleteDrive: OpMode() {
                         customOk = false
                     }
                 }
-                */
+
+                if(gp1.checkToggle(Gamepad.Button.DPAD_UP))
+                {
+                    customElement.moveOneUp()
+                }
+                if(gp1.checkToggle(Gamepad.Button.DPAD_DOWN))
+                {
+                    customElement.moveOneDown()
+                }
+
+                if (gp1.checkToggle(Gamepad.Button.B))
+                {
+                    isPutting = if(!isPutting) {
+                        customElement.openArm()
+                        true
+                    } else {
+                        customElement.closeArm()
+                        false
+                    }
+                }
+
             }
 
             // Mod manual
             if(mod == manual) {
 
-                // Up/down slider gp1
-                if(gp1.checkToggle(Gamepad.Button.RIGHT_BUMPER))
-                    outtake.openSlider()
-                if(gp1.checkToggle(Gamepad.Button.LEFT_BUMPER))
-                    outtake.openLowSlider()
+                // Up/down slider gp2
+                if(gp2.right_trigger > 0.2)
+                    outtake.moveSlider(1.0)
+                if(gp2.left_trigger > 0.2)
+                    outtake.moveSlider(-1.0)
             }
 
             // Mod endgame
